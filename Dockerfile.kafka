@@ -1,0 +1,52 @@
+FROM java:openjdk-8
+
+LABEL mantainer "Giuseppe Iannelli <dev@giuseppeiannelli.it>"
+
+#ENV for Debian
+ENV DEBIAN_FRONTEND noninteractive
+
+#SOFTWARE VERSION
+ARG SCALA_VERSION=2.12
+ARG KAFKA_VERSION=0.10.2.1
+
+#ENVIRONMENTS
+ENV KAFKA_BROKER_PORT=9092
+# ZOOKEEPER_CONNECT set connection to zookeeper cluster in comma separated value: ip1:port,ip2:port,...
+ENV ZOOKEEPER_CONNECT=zookeeper:2181
+ENV BROKER_ID 0
+
+#JAVA ENV
+ENV _JAVA_OPTIONS="-Djava.net.preferIPv4Stack=true"
+
+# RMI_PORT must be JMX_PORT + 1
+# ENV RMI_PORT 10000
+# ENV JMX_PORT 9999
+
+#INSTALL PACKAGES
+RUN apt update -y
+RUN apt install wget gnupg -y
+
+WORKDIR /tmp
+
+#DOWNLOAD KAFKA
+RUN wget http://www-eu.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz http://www-eu.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz.asc
+#VERIFY KAFKA PACKAGES
+RUN wget http://kafka.apache.org/KEYS
+RUN gpg --import KEYS
+RUN gpg --verify kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz.asc kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+
+#EXTRACT KAFKA
+RUN mkdir -p /opt /tmp/kafka-logs
+RUN $(which tar) -xzvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt
+
+RUN rm -rf KEYS kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz.asc kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+
+RUN mv /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka
+
+WORKDIR /opt/kafka
+
+COPY scripts/kafka/entrypoint.sh entrypoint.sh
+
+EXPOSE ${KAFKA_BROKER_PORT} ${JMX_PORT} ${RMI_PORT}
+
+ENTRYPOINT ["/bin/sh", "/opt/kafka/entrypoint.sh"]

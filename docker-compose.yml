@@ -1,0 +1,96 @@
+version: '3'
+
+services:
+
+  zookeeper1:
+    image: giuseppeiannelli/zookeeper:0.10.2.1
+    container_name: zookeeper1
+    hostname: zookeeper1
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+      - "9999:9999"
+
+  zookeeper2:
+    image: giuseppeiannelli/zookeeper:0.10.2.1
+    container_name: zookeeper2
+    hostname: zookeeper2
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+    ports:
+      - "2182:2181"
+      - "2889:2888"
+      - "3889:3888"
+
+  zookeeper3:
+    image: giuseppeiannelli/zookeeper:0.10.2.1
+    container_name: zookeeper3
+    hostname: zookeeper3
+    env_file:
+      - .env.zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+    ports:
+      - "2183:2181"
+      - "2890:2888"
+      - "3890:3888"
+
+  kafka1:
+    image: giuseppeiannelli/kafka:0.10.2.1
+    container_name: kafka1
+    hostname: {{HOST_IP}}
+    env_file:
+      - .env.kafka
+    environment:
+      BROKER_ID: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    command: --override zookeeper.connect=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      --override advertised.listeners=PLAINTEXT://{{HOST_IP}}:9092
+
+
+  kafka2:
+    image: giuseppeiannelli/kafka:0.10.2.1
+    container_name: kafka2
+    hostname: {{HOST_IP}}
+    env_file:
+      - .env.kafka
+    environment:
+      BROKER_ID: 2
+    ports:
+      - "9093:9092"
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    command: --override zookeeper.connect=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+          --override advertised.listeners=PLAINTEXT://{{HOST_IP}}:9093
+
+  kafka3:
+    image: giuseppeiannelli/kafka:0.10.2.1
+    container_name: kafka3
+    hostname: {{HOST_IP}}
+    env_file:
+      - .env.kafka
+    environment:
+      BROKER_ID: 3
+    ports:
+      - "9094:9092"
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    command: --override zookeeper.connect=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+          --override advertised.listeners=PLAINTEXT://{{HOST_IP}}:9094
+
